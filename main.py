@@ -12,7 +12,7 @@ if __name__ == "__main__" :
     #Initialise le moteur
     moteur = Engine.Moteur(longueur, largeur)
 
-    #On crée et initialise un manger qui va gérer le flow du jeu
+    #On crée et initialise un manager qui va gérer le flow du jeu
     manager = GameManager.Manager(moteur)
     manager.Setup()
 

@@ -9,12 +9,17 @@ class Player(Engine.Entity) :
     #Permet d'appeler la fonction __init__() d'Objet
     super().__init__(name, moteur)
 
-    self.engine.player = self
+    self.engine.manager.player = self
 
     self.InitSprite("Assets/Bourgeon.png")
     self.InitRect([moteur.Rlongueur//2 - 8, moteur.Rlargeur//2 - 8], [16, 16])
 
+    self.layer = 1000
+
     self.shown = False
+
+    self.createCircle = False
+    self.circlePos = [0,0]
 
   def Update(self) :
 
@@ -39,6 +44,12 @@ class Player(Engine.Entity) :
           self.deltaPos[1] -= self.deplacement
       if K_s in self.engine.keystrokes :
           self.deltaPos[1] += self.deplacement
+
+      if self.deltaPos[0] != 0 or self.deltaPos[1] != 0:
+        self.createCircle = True
+        self.circlePos = [self.Rect.left, self.Rect.top]
+      else : 
+        self.createCircle = False
 
       #Application du mouvement
       self.Rect = pygame.Rect.move(self.Rect, (self.deltaPos[0], self.deltaPos[1]))

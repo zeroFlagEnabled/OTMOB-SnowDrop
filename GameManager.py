@@ -3,7 +3,7 @@ from pygame.locals import *
 import Engine
 import Player
 import Graine
-
+import Root
 
 class Manager():
   def __init__(self, engine):
@@ -20,6 +20,8 @@ class Manager():
 
     graine = Graine.Graine("Graine", self.engine)
 
+    self.plante = []
+
     #enemy = Enemy.Enemy("Zoubida", joueur, self.engine)
     #enemy2 = Enemy.Enemy("zoubida2leretour", joueur, self.engine)
 
@@ -29,6 +31,10 @@ class Manager():
     continuer = True
     while continuer :
       self.engine.Update()
+
+      if self.player.createCircle:
+        #print(self.player.circlePos)
+        self.plante.append(Root.Root("Plant", self.engine, self.player.circlePos))
 
       #On remplit self.keystrokes une seule fois par frame
       for event in pygame.event.get() :

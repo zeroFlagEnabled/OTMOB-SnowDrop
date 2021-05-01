@@ -42,6 +42,8 @@ class Entity()  :
 
     self.hasSprite = True
 
+    self.layer = 0
+
   def AddAnim(self, name, ImageList):
     if self.hasSprite:
       
@@ -173,7 +175,7 @@ class Scene() :
       if result != 0:
         surfaces.append(result)
     
-    surfacesSorted = sorted(surfaces, key=lambda surface : surface[1].bottomleft[1])
+    surfacesSorted = sorted(surfaces, key=lambda surface : surface[2].layer)
     #print(surfacesSorted)
 
     for index, surface in enumerate(surfacesSorted):
