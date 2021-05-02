@@ -1,6 +1,6 @@
 #Imports
 import pygame
-import Engine
+from data import Engine
 from pygame.locals import *
 
 #Class Joueur

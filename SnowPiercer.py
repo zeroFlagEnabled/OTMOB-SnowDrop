@@ -1,6 +1,6 @@
 #Imports
-import Engine
-import GameManager
+from data import Engine
+from data import GameManager
 
 #Main
 if __name__ == "__main__" :

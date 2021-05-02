@@ -1,12 +1,12 @@
 import pygame, sys, math, json
 from pygame.locals import *
-import Engine
-import Player
-import Graine
-import Root
-import Stone
-import SeveBar
-import Well
+from data import Engine
+from data import Player
+from data import Graine
+from data import Root
+from data import Stone
+from data import SeveBar
+from data import Well
 
 def GenLevel(file, engine):
   with open(file, "r") as content:
