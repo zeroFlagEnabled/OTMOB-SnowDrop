@@ -7,12 +7,13 @@ def FirstElementFunc(ls):
 
 #Un entity est l'élément fondamental du moteur : un joueur, ennemi, environnement, etc.
 class Entity()  :
-  def __init__(self, name, engine, bounded = True)  :
+  def __init__(self, name, engine, bounded = True, toDraw = True)  :
     self.name = name
     self.engine = engine
 
     #Permet de savoir si l'entity peut sortir de l'écran
     self.bounded = bounded
+    self.toDraw = toDraw
 
     self.hasRect = False
     self.hasSprite = False
@@ -93,14 +94,14 @@ class Entity()  :
     self.AnimFrame += 1
     return AnimToPlay
 
-  def Draw(self, rendu) :
+  def Draw(self) :
     if self.hasRect and self.hasSprite :
       #Si on joue une animation, on va déterminer quelle frame de l'animation
       if self.playingAnim:
         return [self.PlayAnim(), self.Rect, self]
       else:
         return [self.Sprite, self.Rect, self]
-  
+    
   def Update(self) :
     #Protocole par défaut d'un entity bounded
     #On s'assure qu'il ne sorte pas de l'écran
@@ -115,40 +116,26 @@ class Entity()  :
         if self.Rect.bottomleft[1] > self.engine.Rlargeur:
           self.Rect = pygame.Rect.move(self.Rect, (0, self.engine.Rlargeur-self.Rect.bottomleft[1]))
     
-      for collision in self.engine.collisions :
-        if self in collision :
-          collider = collision[(collision.index(self) + 1) % 2]
-          if "Wall" == collider.__class__.__name__ :
-            if "Wall" != self.__class__.__name__ :
-              
-              collisionTolerance = 7
-              deltaPos = [0,0]
-              try : 
-                rect1 = self.collideRect
-              except AttributeError : 
-                rect1 = self.Rect
-              try : 
-                rect2 = collider.collideRect
-              except AttributeError : 
-                rect2 = collider.Rect
+  def Move(self, deltaPos, tiles):
+    self.Rect.x += deltaPos[0]
 
-              if abs(rect1.top - rect2.bottom) < collisionTolerance:
-                deltaPos[1] += abs(rect1.top - rect2.bottom)
-              if abs(rect1.bottom - rect2.top) < collisionTolerance:
-                deltaPos[1] -= abs(rect1.bottom - rect2.top)
-              if abs(rect1.left - rect2.right) < collisionTolerance:
-                deltaPos[0] += abs(rect1.left - rect2.right)
-              if abs(rect1.right - rect2.left) < collisionTolerance:
-                deltaPos[0] -= abs(rect1.right - rect2.left)
+    walls = self.engine.manager.CollTest(tiles, self)
 
-              try :
-                self.collideRect = self.collideRect.move(tuple(deltaPos))
-              except AttributeError : pass
-              try :
-                self.pos[0] += deltaPos[0]
-                self.pos[1] += deltaPos[1]
-              except AttributeError : pass
-              self.Rect = self.Rect.move(tuple(deltaPos))       
+    for wall in walls:
+      if deltaPos[0] > 0:
+        self.Rect.right = wall.Rect.left
+      if deltaPos[0] < 0:
+        self.Rect.left = wall.Rect.right
+    
+    self.Rect.y += deltaPos[1]
+
+    walls = self.engine.manager.CollTest(tiles, self)
+
+    for wall in walls:
+      if deltaPos[1] > 0:
+        self.Rect.bottom = wall.Rect.top
+      if deltaPos[1] < 0:
+        self.Rect.top = wall.Rect.bottom
 
 #La scène est l'élément intermédiaire du moteur, elle permet de garder une trace de chaque entity qui s'y trouve
 class Scene() :
@@ -171,9 +158,10 @@ class Scene() :
     surfaces = []
 
     for entity in self.contenu :
-      result = entity.Draw(rendu)
-      if result != 0:
-        surfaces.append(result)
+      if entity.toDraw:
+        result = entity.Draw()
+        if result != 0:
+          surfaces.append(result)
     
     surfacesSorted = sorted(surfaces, key=lambda surface : surface[2].layer)
     #print(surfacesSorted)
@@ -200,17 +188,27 @@ class Scene() :
 
 #L'élément le plus grand du système, il englobe le tout
 class Moteur() :
-  def __init__(self, longueur, largeur) :
-    self.longueur = longueur
-    self.largeur = largeur
+  def __init__(self) :
+    #self.longueur = longueur
+    #self.largeur = largeur
+
+    pygame.init()
+
+    self.largeur = pygame.display.Info().current_h
+    self.longueur = pygame.display.Info().current_w
 
     self.player = 0
 
     #Vu qu'on a un système de rendu intermédaire (adapté à la taille des sprites)
     #On définit les caractéristiques de ce rendu
-    self.rapport = 4
-    self.Rlongueur = self.longueur//self.rapport
-    self.Rlargeur = self.largeur//self.rapport
+    #self.rapport = 4
+    #self.Rlongueur = self.longueur//self.rapport
+    #elf.Rlargeur = self.largeur//self.rapport
+
+    self.Rlongueur = 256
+    self.Rlargeur = 192
+    self.rapport = max(self.largeur/self.Rlargeur, self.largeur/self.Rlongueur)
+    #print(self.rapport)
     
     self.frame = 0
     self.pause = False
@@ -219,14 +217,20 @@ class Moteur() :
 
     self.manager = manager
 
-    pygame.init()
+    #pygame.init()
     
-    self.fenetre = pygame.display.set_mode((self.longueur, self.largeur))
+    self.fenetre = pygame.display.set_mode((self.longueur, self.largeur), pygame.FULLSCREEN)
     self.rendu = pygame.Surface((self.Rlongueur, self.Rlargeur))
+
+    self.bg = pygame.Surface((self.rendu.get_size()))
+    self.bg.fill((255,0,0))
+    self.Tempsurface = pygame.Surface((self.rendu.get_size()))
+
+    self.bgImage = pygame.image.load("data/DirtBG.png")
 
     #On remplace le curseur par le viseur, on prépare le curseur pour les menus
     pygame.mouse.set_visible(False)
-    self.cursor = pygame.image.load("Assets/Cursor.png").convert_alpha()
+    self.cursor = pygame.image.load("data/Cursor.png").convert_alpha()
     
     self.scene = Scene(self)
 
@@ -241,17 +245,43 @@ class Moteur() :
   def Update(self) :
 
     #On commence par tout recouvrir d'un écran de couleur unie
-    self.rendu.fill((39,39,68))
+    self.fenetre.fill((0,0,0))
+    self.rendu.fill((139,69,19))
+    self.rendu.blit(self.bgImage, (0,0))
+    #self.rendu.set_colorkey((39,39,68))
       
-    self.scene.Update()
+    if (not self.manager.gameOver) and (not self.manager.gameWon) and (not self.manager.gameStart):
+      self.scene.Update()
 
     self.scene.Draw(self.rendu)
     
-    self.rendu.blit(self.cursor, (pygame.mouse.get_pos()[0]//self.rapport - self.cursor.get_width()//2, pygame.mouse.get_pos()[1]//self.rapport - self.cursor.get_height()//2))
+    self.Tempsurface.fill((0,0,0))
+    #self.Tempsurface.blit(self.bg, (0,0))
+    self.Tempsurface.blit(self.rendu, (0,0))
+    self.rendu.fill((39,39,68))
+    self.Tempsurface.blit(self.manager.mask, (0,25), special_flags=pygame.BLEND_MULT)
+    self.Tempsurface.set_colorkey((0,0,0))
+
+    self.rendu.blit(self.Tempsurface, (0,0))
+
+    for guiElement in self.manager.gui:
+      render = guiElement.Draw()
+      self.rendu.blit(render[0], render[1])
+
+    if self.manager.gameOver:
+      self.rendu.blit(self.manager.gOScreen, (0,0))
+    if self.manager.gameWon:
+      self.rendu.blit(self.manager.gWScreen, (0,0))
+    if self.manager.gameStart:
+      self.rendu.blit(self.manager.SplashScreen, (0,0))
+
+    self.rendu.blit(self.cursor, (pygame.mouse.get_pos()[0]//self.rapport, pygame.mouse.get_pos()[1]//self.rapport))
 
     #Le passage du rendu intérmédiare à la fenêtre finale
-    surface = pygame.transform.scale(self.rendu, (self.longueur, self.largeur))
-    self.fenetre.blit(surface, (0,0))
+    #print(int(self.Rlargeur* self.rapport))
+    surface = pygame.transform.scale(self.rendu, (int(self.Rlongueur * self.rapport), int(self.Rlargeur * self.rapport)))
+    self.fenetre.blit(surface, ((self.longueur - surface.get_width())//2,(self.largeur - surface.get_height())//2))
 
     self.frame += 1
     pygame.display.flip()
+    self.clock.tick(60)

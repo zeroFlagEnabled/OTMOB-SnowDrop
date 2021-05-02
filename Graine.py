@@ -9,5 +9,5 @@ class Graine(Engine.Entity) :
     #Permet d'appeler la fonction __init__() d'Objet
     super().__init__(name, moteur)
 
-    self.InitSprite("Assets/Graine.png")
-    self.InitRect([moteur.Rlongueur//2 - 8, moteur.Rlargeur//2 - 8], [16, 16])
+    self.InitSprite("data/Graine.png")
+    self.InitRect([moteur.Rlongueur//2 - 4, moteur.Rlargeur - 34], [8, 8])

@@ -5,17 +5,20 @@ import GameManager
 #Main
 if __name__ == "__main__" :
 
-    #Dimensions de la fenêtre
-    largeur = 600 #1024
-    longueur = 600 #768
+    continuer = True
 
-    #Initialise le moteur
-    moteur = Engine.Moteur(longueur, largeur)
+    while continuer :
+        #Dimensions de la fenêtre
+        #largeur = 768
+        #longueur = 1024
 
-    #On crée et initialise un manager qui va gérer le flow du jeu
-    manager = GameManager.Manager(moteur)
-    manager.Setup()
+        #Initialise le moteur
+        moteur = Engine.Moteur()
 
-    #On fait tourner le manager
-    manager.Run()
-    #moteur.Run()
+        #On crée et initialise un manager qui va gérer le flow du jeu
+        manager = GameManager.Manager(moteur)
+        manager.Setup()
+
+        #On fait tourner le manager
+        continuer = manager.Run()
+        #moteur.Run()
